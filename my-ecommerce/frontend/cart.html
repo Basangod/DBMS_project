@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Cart</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>Your Cart</h1>
+<a href="index.html">⬅ Back to Store</a>
+<hr>
+
+<div id="cart-items"></div>
+
+<script>
+  function loadCart() {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const container = document.getElementById("cart-items");
+
+    if (cart.length === 0) {
+      container.innerHTML = "<p>Your cart is empty.</p>";
+      return;
+    }
+
+    let total = 0;
+
+    container.innerHTML = cart.map(item => {
+      total += item.price * item.quantity;
+
+      return `
+        <div class="cart-card">
+          <h2>${item.name}</h2>
+          <p>Price: ₹${item.price}</p>
+
+          <div class="quantity-controls">
+            <button onclick="changeQuantity(${item.id}, -1)">-</button>
+            <span>${item.quantity}</span>
+            <button onclick="changeQuantity(${item.id}, +1)">+</button>
+          </div>
+
+          <button class="remove-btn" onclick="removeFromCart(${item.id})">Remove</button>
+        </div>
+      `;
+    }).join("");
+
+    container.innerHTML += `
+      <hr>
+      <h2>Total Price: ₹${total}</h2>
+    `;
+  }
+
+  function changeQuantity(id, delta) {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let item = cart.find(p => p.id === id);
+
+    if (!item) return;
+
+    item.quantity += delta;
+
+    // Remove item if quantity becomes zero
+    if (item.quantity <= 0) {
+      cart = cart.filter(p => p.id !== id);
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+  }
+
+  function removeFromCart(id) {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart = cart.filter(p => p.id !== id);
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+  }
+
+  loadCart();
+</script>
+
+
+</body>
+</html>

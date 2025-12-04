@@ -1,0 +1,15 @@
+I am building a simple project of frontend(website) and backend(NoSql but not MongoDB) like flipkart,Amazon etc
+the backend would be my own device(choose a simple Nosql rather than MongoDB) and frontend would be a HTML+CSS+Javascript 
+It may include an API(I am not sure of what API to use) that connects the backend and frontend 
+Can you give the tools and setup to be made to work and run this project
+
+
+Chatgpt
+backend
+	Use LowDB (if you want TRUE NoSQL)
+	Use SQLite (if you want stability + easier queries)
+
+
+
+
+
