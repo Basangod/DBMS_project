@@ -1,14 +1,22 @@
 import readline from "readline-sync";
-import { Low } from "lowdb";
-import { JSONFile } from "lowdb/node";
+import mongoose from "mongoose";
 
-const adapter = new JSONFile("db.json");
-const db = new Low(adapter, { products: [] });
+// MongoDB connection
+await mongoose.connect("mongodb://localhost:27017/ecommerce");
 
-await db.read();
+// Product schema
+const productSchema = new mongoose.Schema({
+  id: { type: Number, required: true, unique: true },
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  category: { type: String, required: true },
+  image: { type: String, required: true }
+});
+
+const Product = mongoose.model("Product", productSchema);
 
 function showMenu() {
-  console.log("\n=== LOWDB CLI MENU ===");
+  console.log("\n=== MONGODB CLI MENU ===");
   console.log("1. View all products");
   console.log("2. Insert a new product");
   console.log("3. Update a product");
@@ -18,7 +26,12 @@ function showMenu() {
 
 async function viewProducts() {
   console.log("\n--- All Products ---");
-  console.log(db.data.products);
+  try {
+    const products = await Product.find();
+    console.log(products);
+  } catch (error) {
+    console.log("Error:", error.message);
+  }
 }
 
 async function insertProduct() {
@@ -28,40 +41,50 @@ async function insertProduct() {
   const category = readline.question("Enter category: ");
   const image = readline.question("Enter image path or URL: ");
 
-  db.data.products.push({ id, name, price, category, image });
-  await db.write();
-
-  console.log("Product inserted successfully!");
+  try {
+    const product = new Product({ id, name, price, category, image });
+    await product.save();
+    console.log("Product inserted successfully!");
+  } catch (error) {
+    console.log("Error:", error.message);
+  }
 }
 
 async function updateProduct() {
   const id = Number(readline.question("Enter ID of product to update: "));
-  let product = db.data.products.find(p => p.id === id);
 
-  if (!product) {
-    console.log("Product not found.");
-    return;
+  try {
+    let product = await Product.findOne({ id });
+
+    if (!product) {
+      console.log("Product not found.");
+      return;
+    }
+
+    const name = readline.question(`Enter new name (${product.name}): `);
+    const priceStr = readline.question(`Enter new price (${product.price}): `);
+    const image = readline.question(`Enter new image (${product.image}): `);
+
+    if (name) product.name = name;
+    if (priceStr) product.price = Number(priceStr);
+    if (image) product.image = image;
+
+    await product.save();
+    console.log("Product updated successfully!");
+  } catch (error) {
+    console.log("Error:", error.message);
   }
-
-  const name = readline.question(`Enter new name (${product.name}): `);
-  const price = Number(readline.question(`Enter new price (${product.price}): `));
-  const image = readline.question(`Enter new image (${product.image}): `);
-
-  if (name) product.name = name;
-  if (price) product.price = price;
-  if (image) product.image = image;
-
-  await db.write();
-  console.log("Product updated successfully!");
 }
 
 async function deleteProduct() {
   const id = Number(readline.question("Enter ID to delete: "));
 
-  db.data.products = db.data.products.filter(p => p.id !== id);
-  await db.write();
-
-  console.log("Product deleted successfully!");
+  try {
+    await Product.deleteOne({ id });
+    console.log("Product deleted successfully!");
+  } catch (error) {
+    console.log("Error:", error.message);
+  }
 }
 
 async function main() {
@@ -84,6 +107,7 @@ async function main() {
         break;
       case "5":
         console.log("Goodbye!");
+        await mongoose.disconnect();
         process.exit();
         break;
       default:
